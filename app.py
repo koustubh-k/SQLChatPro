@@ -100,7 +100,7 @@ def configure_db(db_uri):
 
 
 if db_uri == POSTGRES:
-    db = configure_db(db_uri, pg_host=postgresql_host, pg_user=postgresql_user, pg_password=postgresql_password, pg_db=postgresql_db)
+    db = configure_db(db_uri)
 else:
     db = configure_db(db_uri)
 
@@ -133,3 +133,4 @@ if user_query:
         st.session_state.messages.append({"role": "assistant", "content": response})
 
         st.write(response)
+
