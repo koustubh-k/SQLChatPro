@@ -70,30 +70,33 @@ if not api_key:
     st.info("Please add the GROQ API key")
     st.stop()
 
-@st.cache_resource
-def get_llm(key):
-    """Initializes and caches the LLM."""
-    return ChatGroq(groq_api_key=api_key, model_name="Llama3-8b-8192", streaming=True)
 
+@st.cache_resource
+def get_llm():
+    """Initializes and caches the LLM."""
+    return ChatGroq(groq_api_key=st.secrets.groq_api_key, model_name="Llama3-8b-8192", streaming=True)
+
+
+
+# Updated configure_db function
 @st.cache_resource(ttl="2h")
-def configure_db(db_uri, pg_host=None, pg_user=None, pg_password=None, pg_db=None):
-    if db_uri == POSTGRES:
-        if not (pg_host and pg_user and pg_password and pg_db):
-            st.error("Please provide all PostgreSQL connection details.")
-            st.stop()
+def configure_db(db_uri):
+    if db_uri == LOCALDB:
+        dbfilepath = (Path(__file__).parent / "student.db").absolute()
+        creator = lambda: sqlite3.connect(f"file:{dbfilepath}?mode=ro", uri=True)
+        return SQLDatabase(create_engine("sqlite:///", creator=creator))
+    elif db_uri == POSTGRES:
+        # Connect using st.secrets
         try:
-            return SQLDatabase(create_engine(f"postgresql+psycopg2://{pg_user}:{pg_password}@{pg_host}/{pg_db}"))
+            return SQLDatabase(create_engine(
+                f"postgresql+psycopg2://{st.secrets.connections.postgresql.username}:{st.secrets.connections.postgresql.password}@{st.secrets.connections.postgresql.host}:{st.secrets.connections.postgresql.port}/{st.secrets.connections.postgresql.database}"
+            ))
         except ImportError:
             st.error("Psycopg2 library not found. Please install it with: `pip install psycopg2-binary`")
             st.stop()
         except Exception as e:
             st.error(f"Failed to connect to PostgreSQL: {e}")
             st.stop()
-    elif db_uri == LOCALDB:
-        dbfilepath = (Path(__file__).parent / "student.db").absolute()
-        print(dbfilepath)
-        creator = lambda: sqlite3.connect(f"file:{dbfilepath}?mode=ro", uri=True)
-        return SQLDatabase(create_engine("sqlite:///", creator=creator))
 
 
 if db_uri == POSTGRES:
@@ -128,4 +131,5 @@ if user_query:
         streamlit_callback = StreamlitCallbackHandler(st.container())
         response = agent.run(user_query, callbacks=[streamlit_callback])
         st.session_state.messages.append({"role": "assistant", "content": response})
+
         st.write(response)
