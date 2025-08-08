@@ -2,7 +2,7 @@
 
 An interactive Streamlit application to **chat with your PostgreSQL database** using **LangChain** and **Groq's ultra-fast LLMs**. Easily connect to your database, ask natural language questions, and receive insights — all in real-time!
 
-![SQLChatPro Screenshot](screenshot.png)
+## Visit: https://sqlchatpro-bykk.streamlit.app/
 
 ---
 
